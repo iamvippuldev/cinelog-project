@@ -1,0 +1,856 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profile_user.username }}'s Film Diary & Profile - CineLog{% endblock %}
+
+{% block extra_head %}
+<style>
+    .letterboxd-profile-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 1.75rem;
+        margin-bottom: 0;
+    }
+    .profile-avatar-100 {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1f2730, #2c3440);
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #9ab;
+        flex-shrink: 0;
+    }
+    .edit-profile-btn {
+        background-color: #2c3440;
+        border: 1px solid #456;
+        color: #cde;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        padding: 0.35rem 0.9rem;
+        border-radius: 50rem;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition: all 0.15s ease-in-out;
+    }
+    .edit-profile-btn:hover {
+        background-color: #456;
+        color: #fff;
+        border-color: #678;
+    }
+    .stat-box {
+        text-align: center;
+        min-width: 75px;
+    }
+    .stat-number {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.1;
+    }
+    .stat-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        color: #9ab;
+        text-transform: uppercase;
+        margin-top: 0.25rem;
+    }
+    /* Subnav Tab Navigation */
+    .profile-subnav {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        overflow-x: auto;
+        white-space: nowrap;
+        margin-bottom: 2rem;
+    }
+    .profile-subnav .nav-link {
+        color: #9ab !important;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 0.85rem 1rem;
+        border: none;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        transition: all 0.15s ease;
+    }
+    .profile-subnav .nav-link:hover {
+        color: #fff !important;
+    }
+    .profile-subnav .nav-link.active {
+        color: #fff !important;
+        border-bottom-color: #00e054;
+    }
+    /* Favorite films slots */
+    .favorite-slot {
+        height: 180px;
+        border-radius: 0.4rem;
+        border: 2px dashed rgba(255, 255, 255, 0.12);
+        background-color: rgba(255, 255, 255, 0.02);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #678;
+        font-size: 1.75rem;
+        transition: border-color 0.2s;
+    }
+    .favorite-slot:hover {
+        border-color: #00e054;
+        color: #00e054;
+    }
+    /* Posters */
+    .film-card {
+        background-color: #1c2228;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 0.4rem;
+        overflow: hidden;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+        text-decoration: none;
+        display: block;
+    }
+    .film-card:hover {
+        transform: translateY(-3px);
+        border-color: #00e054 !important;
+    }
+    .film-poster-wrap {
+        position: relative;
+        height: 180px;
+        background-color: #0d1117;
+        overflow: hidden;
+    }
+    .film-poster-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .film-title-bar {
+        padding: 0.4rem 0.5rem;
+    }
+    .section-header {
+        color: #9ab;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 0.4rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .stars-green {
+        color: #00e054;
+        font-size: 0.82rem;
+    }
+    /* Ratings Histogram */
+    .histogram-container {
+        height: 80px;
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        padding-top: 10px;
+        margin-bottom: 0.5rem;
+    }
+    .histogram-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        justify-content: flex-end;
+    }
+    .histogram-bar-wrap {
+        width: 100%;
+        height: 60px;
+        display: flex;
+        align-items: flex-end;
+        background-color: rgba(255, 255, 255, 0.03);
+        border-radius: 2px;
+    }
+    .histogram-bar {
+        width: 100%;
+        background-color: #00e054;
+        border-radius: 2px 2px 0 0;
+        min-height: 2px;
+        transition: height 0.3s ease;
+    }
+    .histogram-star-label {
+        font-size: 0.68rem;
+        color: #9ab;
+        margin-top: 4px;
+        font-weight: 600;
+    }
+    /* Pro Card Banner */
+    .pro-banner {
+        background: linear-gradient(135deg, #1c2620 0%, #151a1e 100%);
+        border: 1px solid rgba(0, 224, 84, 0.25);
+        border-radius: 0.6rem;
+        padding: 1.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ========================================================= -->
+<!-- LETTERBOXD PROFILE HEADER                                 -->
+<!-- ========================================================= -->
+<div class="letterboxd-profile-header mb-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-4">
+        <!-- Left: Avatar (100x100), Username, Edit Profile button -->
+        <div class="d-flex align-items-center gap-3">
+            <div class="profile-avatar-100 shadow overflow-hidden">
+                {% if profile_user.profile.avatar %}
+                    <img src="{{ profile_user.profile.avatar.url }}" alt="{{ profile_user.username }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% elif profile_user.profile.avatar_url %}
+                    <img src="{{ profile_user.profile.avatar_url }}" alt="{{ profile_user.username }}" style="width: 100%; height: 100%; object-fit: cover;" referrerpolicy="no-referrer">
+                {% else %}
+                    <i class="bi bi-person-fill"></i>
+                {% endif %}
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-1">
+                    <h1 class="h3 text-white fw-bold mb-0" style="letter-spacing: -0.5px;">
+                        {% if profile_user.get_full_name %}
+                            {{ profile_user.get_full_name }}
+                            <span class="text-secondary fs-6 fw-normal ms-1">(@{{ profile_user.username }})</span>
+                        {% else %}
+                            {{ profile_user.username }}
+                        {% endif %}
+                    </h1>
+                    {% if is_own_profile %}
+                        <button type="button" class="edit-profile-btn" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            <i class="bi bi-pencil-square me-1"></i>Edit Profile
+                        </button>
+                    {% else %}
+                        <button class="edit-profile-btn" type="button">
+                            Follow
+                        </button>
+                    {% endif %}
+                </div>
+                {% if profile_user.profile.bio %}
+                    <p class="text-light-emphasis small mb-1" style="max-width: 500px; font-size: 0.85rem; line-height: 1.4;">
+                        {{ profile_user.profile.bio }}
+                    </p>
+                {% endif %}
+                <div class="text-secondary small" style="color: #9ab !important;">
+                    <i class="bi bi-calendar3 me-1"></i>Member since {{ profile_user.date_joined|date:"F Y" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Counters for "X FILMS", "0 FOLLOWING", "0 FOLLOWERS" -->
+        <div class="d-flex align-items-center gap-3">
+            <div class="stat-box">
+                <div class="stat-number">{{ films_watched_count }}</div>
+                <div class="stat-label">Films</div>
+            </div>
+            <div class="border-start border-secondary border-opacity-25" style="height: 38px;"></div>
+            <div class="stat-box">
+                <div class="stat-number">{{ following_count|default:0 }}</div>
+                <div class="stat-label">Following</div>
+            </div>
+            <div class="border-start border-secondary border-opacity-25" style="height: 38px;"></div>
+            <div class="stat-box">
+                <div class="stat-number">{{ followers_count|default:0 }}</div>
+                <div class="stat-label">Followers</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- HORIZONTAL SUBNAV TABS                                    -->
+<!-- ========================================================= -->
+<nav class="profile-subnav nav nav-pills" id="profileSubnav" role="tablist">
+    <button class="nav-link active" id="tab-profile-btn" data-bs-toggle="pill" data-bs-target="#tab-profile" type="button" role="tab" aria-selected="true">
+        Profile
+    </button>
+    <button class="nav-link" id="tab-activity-btn" data-bs-toggle="pill" data-bs-target="#tab-activity" type="button" role="tab" aria-selected="false">
+        Activity
+    </button>
+    <button class="nav-link" id="tab-films-btn" data-bs-toggle="pill" data-bs-target="#tab-films" type="button" role="tab" aria-selected="false">
+        Films <span class="badge rounded-pill bg-dark border border-secondary text-secondary ms-1">{{ films_watched_count }}</span>
+    </button>
+    <button class="nav-link" id="tab-diary-btn" data-bs-toggle="pill" data-bs-target="#tab-diary" type="button" role="tab" aria-selected="false">
+        Diary
+    </button>
+    <button class="nav-link" id="tab-reviews-btn" data-bs-toggle="pill" data-bs-target="#tab-reviews" type="button" role="tab" aria-selected="false">
+        Reviews <span class="badge rounded-pill bg-dark border border-secondary text-secondary ms-1">{{ total_reviews_count }}</span>
+    </button>
+    <button class="nav-link" id="tab-watchlist-btn" data-bs-toggle="pill" data-bs-target="#tab-watchlist" type="button" role="tab" aria-selected="false">
+        Watchlist <span class="badge rounded-pill bg-dark border border-secondary text-secondary ms-1">{{ watchlist_count }}</span>
+    </button>
+    <button class="nav-link" id="tab-lists-btn" data-bs-toggle="pill" data-bs-target="#tab-lists" type="button" role="tab" aria-selected="false">
+        Lists
+    </button>
+    <button class="nav-link" id="tab-likes-btn" data-bs-toggle="pill" data-bs-target="#tab-likes" type="button" role="tab" aria-selected="false">
+        Likes
+    </button>
+    <button class="nav-link" id="tab-tags-btn" data-bs-toggle="pill" data-bs-target="#tab-tags" type="button" role="tab" aria-selected="false">
+        Tags
+    </button>
+    <button class="nav-link" id="tab-network-btn" data-bs-toggle="pill" data-bs-target="#tab-network" type="button" role="tab" aria-selected="false">
+        Network
+    </button>
+</nav>
+
+<!-- Tab Content Wrapper -->
+<div class="tab-content" id="profileTabContent">
+
+    <!-- ========================================================= -->
+    <!-- TAB 1: MAIN PROFILE VIEW (Two-Column Layout)               -->
+    <!-- ========================================================= -->
+    <div class="tab-pane fade show active" id="tab-profile" role="tabpanel" tabindex="0">
+        <div class="row g-4">
+            
+            <!-- LEFT COLUMN: FAVORITE FILMS + RECENT ACTIVITY (col-lg-8) -->
+            <div class="col-lg-8">
+                <!-- FAVORITE FILMS ROW -->
+                <div class="mb-5">
+                    <div class="section-header">
+                        <span>Favorite Films</span>
+                        {% if is_own_profile %}
+                            <span class="small fw-normal text-secondary">Edit favorites</span>
+                        {% endif %}
+                    </div>
+
+                    {% if favorite_films %}
+                        <div class="row row-cols-2 row-cols-sm-4 g-3">
+                            {% for movie in favorite_films %}
+                                <div class="col">
+                                    <a href="{% url 'movie_detail' movie.pk %}" class="film-card h-100">
+                                        <div class="film-poster-wrap">
+                                            {% if movie.poster_url %}
+                                                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="movie-poster" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                                            {% else %}
+                                                <div class="d-flex align-items-center justify-content-center h-100 text-secondary">
+                                                    <i class="bi bi-film fs-2"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- Empty placeholder: 4 bordered poster slots & message -->
+                        <div class="p-3 mb-3 rounded" style="background-color: #1c2228; border: 1px solid rgba(255,255,255,0.06);">
+                            <p class="text-secondary small mb-3 text-center" style="color: #9ab !important;">
+                                Don't forget to select your favorite films!
+                            </p>
+                            <div class="row row-cols-4 g-3">
+                                <div class="col">
+                                    <div class="favorite-slot" title="Add Favorite Film 1">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="favorite-slot" title="Add Favorite Film 2">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="favorite-slot" title="Add Favorite Film 3">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="favorite-slot" title="Add Favorite Film 4">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- RECENT ACTIVITY ROW (4 movie cards) -->
+                <div class="mb-4">
+                    <div class="section-header">
+                        <span>Recent Activity</span>
+                        <a href="javascript:void(0)" onclick="document.getElementById('tab-reviews-btn').click();" class="text-decoration-none text-secondary hover-accent small fw-normal">
+                            All Reviews
+                        </a>
+                    </div>
+
+                    {% if recent_user_reviews %}
+                        <div class="row row-cols-2 row-cols-sm-4 g-3">
+                            {% for r in recent_user_reviews %}
+                                <div class="col">
+                                    <a href="{% url 'movie_detail' r.movie.pk %}" class="film-card h-100">
+                                        <div class="film-poster-wrap">
+                                            {% if r.movie.poster_url %}
+                                                <img src="{{ r.movie.poster_url }}" alt="{{ r.movie.title }}" class="movie-poster" loading="lazy" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                                            {% else %}
+                                                <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                                                    <i class="bi bi-film fs-2 mb-1"></i>
+                                                    <span class="small px-1 text-center" style="font-size: 0.7rem;">{{ r.movie.title }}</span>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="film-title-bar">
+                                            <div class="text-white small fw-bold text-truncate" title="{{ r.movie.title }}">
+                                                {{ r.movie.title }}
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center" style="font-size: 0.72rem;">
+                                                <span class="stars-green">
+                                                    {% if r.rating == 5.0 %}★★★★★
+                                                    {% elif r.rating >= 4.5 %}★★★★½
+                                                    {% elif r.rating >= 4.0 %}★★★★
+                                                    {% elif r.rating >= 3.5 %}★★★½
+                                                    {% elif r.rating >= 3.0 %}★★★
+                                                    {% elif r.rating >= 2.5 %}★★½
+                                                    {% elif r.rating >= 2.0 %}★★
+                                                    {% elif r.rating >= 1.5 %}★½
+                                                    {% else %}★
+                                                    {% endif %}
+                                                </span>
+                                                <span class="text-secondary" style="font-size: 0.68rem;">{{ r.watched_date|date:"M j"|default:r.created_at|date:"M j" }}</span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4 cinelog-card p-3">
+                            <i class="bi bi-camera-reels text-secondary fs-2 mb-2"></i>
+                            <p class="text-secondary small mb-0">No recent activity logged yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- RIGHT SIDEBAR (col-lg-4) -->
+            <div class="col-lg-4">
+                <!-- 1. RATINGS SECTION (CSS Histogram Bar Chart) -->
+                <div class="card cinelog-card p-3 mb-4">
+                    <div class="section-header mb-2 pb-2">
+                        <span>Ratings</span>
+                        <span class="text-white small fw-normal">{{ total_reviews_count }} ratings</span>
+                    </div>
+
+                    {% if total_reviews_count > 0 %}
+                        <!-- Histogram Bars -->
+                        <div class="histogram-container">
+                            {% for bar in histogram_data %}
+                                <div class="histogram-col" title="{{ bar.star }} Stars: {{ bar.count }} reviews">
+                                    <span class="text-secondary" style="font-size: 0.65rem; margin-bottom: 2px;">{{ bar.count }}</span>
+                                    <div class="histogram-bar-wrap">
+                                        <div class="histogram-bar" style="height: {% if bar.count > 0 %}{{ bar.pct }}%{% else %}0%{% endif %}; min-height: {% if bar.count > 0 %}4px{% else %}0px{% endif %};"></div>
+                                    </div>
+                                    <div class="histogram-star-label">{{ bar.star }}★</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="d-flex justify-content-between text-secondary pt-2 border-top border-secondary border-opacity-25" style="font-size: 0.72rem;">
+                            <span>Average rating:</span>
+                            <span class="text-warning fw-bold">{% if avg_rating_given %}★ {{ avg_rating_given }}{% else %}—{% endif %}</span>
+                        </div>
+                    {% else %}
+                        <p class="text-secondary small text-center my-3" style="color: #9ab !important;">No ratings logged yet.</p>
+                    {% endif %}
+                </div>
+
+                <!-- 3. ACTIVITY FEED LIST -->
+                <div class="card cinelog-card p-3">
+                    <div class="section-header mb-2 pb-2">
+                        <span>Activity</span>
+                    </div>
+                    {% if recent_user_reviews %}
+                        <ul class="list-unstyled mb-0" style="font-size: 0.78rem; line-height: 1.6;">
+                            {% for r in recent_user_reviews %}
+                                <li class="text-secondary py-1 border-bottom border-secondary border-opacity-10 d-flex align-items-baseline gap-1">
+                                    <span class="text-success" style="color: #00e054 !important;">•</span>
+                                    <div>
+                                        {% if is_own_profile %}You{% else %}{{ profile_user.username }}{% endif %} rated 
+                                        <a href="{% url 'movie_detail' r.movie.pk %}" class="text-white fw-semibold text-decoration-none hover-accent">
+                                            {{ r.movie.title }}
+                                        </a>
+                                        <span class="stars-green">
+                                            {% if r.rating == 5.0 %}★★★★★
+                                            {% elif r.rating >= 4.0 %}★★★★
+                                            {% elif r.rating >= 3.0 %}★★★
+                                            {% elif r.rating >= 2.0 %}★★
+                                            {% else %}★
+                                            {% endif %}
+                                        </span>
+                                        <span class="text-secondary" style="font-size: 0.68rem;">
+                                            {{ r.watched_date|date:"M j"|default:r.created_at|date:"M j" }}
+                                        </span>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-secondary small text-center my-2" style="color: #9ab !important;">No recent activity.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- TAB 2: ACTIVITY FEED EXPANDED                             -->
+    <!-- ========================================================= -->
+    <div class="tab-pane fade" id="tab-activity" role="tabpanel" tabindex="0">
+        <div class="card cinelog-card p-4">
+            <h5 class="text-white fw-bold mb-3">Activity Stream</h5>
+            {% if user_reviews %}
+                <div class="list-group list-group-flush bg-transparent">
+                    {% for r in user_reviews %}
+                        <div class="list-group-item bg-transparent text-secondary border-secondary border-opacity-25 px-0 py-3 d-flex gap-3 align-items-center">
+                            <a href="{% url 'movie_detail' r.movie.pk %}">
+                                {% if r.movie.poster_url %}
+                                    <img src="{{ r.movie.poster_url }}" alt="{{ r.movie.title }}" style="width: 44px; height: 66px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer">
+                                {% else %}
+                                    <div class="bg-dark text-secondary d-flex align-items-center justify-content-center" style="width: 44px; height: 66px; border-radius: 4px;">
+                                        <i class="bi bi-film"></i>
+                                    </div>
+                                {% endif %}
+                            </a>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-white fw-bold">{{ profile_user.username }}</span>
+                                    <span class="text-secondary small">watched & rated</span>
+                                    <a href="{% url 'movie_detail' r.movie.pk %}" class="text-white fw-bold text-decoration-none hover-accent">
+                                        {{ r.movie.title }}
+                                    </a>
+                                    <span class="stars-green fw-bold">★ {{ r.rating|floatformat:1 }}</span>
+                                </div>
+                                <div class="text-secondary small mt-1">
+                                    {{ r.watched_date|date:"F j, Y"|default:r.created_at|date:"F j, Y" }}
+                                </div>
+                                {% if r.review_text %}
+                                    <p class="text-light-emphasis small mt-2 mb-0 fst-italic">"{{ r.review_text }}"</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-secondary small mb-0">No activity recorded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- TAB 3: FILMS (Full Film Collection Grid)                   -->
+    <!-- ========================================================= -->
+    <div class="tab-pane fade" id="tab-films" role="tabpanel" tabindex="0">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="text-white fw-bold mb-0">Film Collection</h5>
+            <span class="text-secondary small">{{ films_watched_count }} films logged</span>
+        </div>
+        {% if user_reviews %}
+            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3">
+                {% for r in user_reviews %}
+                    <div class="col">
+                        <a href="{% url 'movie_detail' r.movie.pk %}" class="film-card h-100">
+                            <div class="film-poster-wrap">
+                                {% if r.movie.poster_url %}
+                                    <img src="{{ r.movie.poster_url }}" alt="{{ r.movie.title }}" class="movie-poster" loading="lazy" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                                {% else %}
+                                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                                        <i class="bi bi-film fs-2 mb-1"></i>
+                                        <span class="small px-1 text-center" style="font-size: 0.7rem;">{{ r.movie.title }}</span>
+                                    </div>
+                                {% endif %}
+                                <div class="position-absolute bottom-0 end-0 m-2">
+                                    <span class="badge bg-dark bg-opacity-75 border border-success text-success fw-bold small" style="color: #00e054 !important; border-color: #00e054 !important;">
+                                        ★ {{ r.rating|floatformat:1 }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="film-title-bar">
+                                <div class="text-white small fw-bold text-truncate" title="{{ r.movie.title }}">{{ r.movie.title }}</div>
+                                <span class="text-secondary" style="font-size: 0.72rem;">{{ r.movie.release_year }}</span>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5 cinelog-card p-4">
+                <i class="bi bi-camera-reels text-secondary display-4 mb-3"></i>
+                <h5 class="text-white">No Films Logged</h5>
+                <p class="text-secondary small">Films you review or log will appear here.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- TAB 4: DIARY / LOGGED FILMS                                -->
+    <!-- ========================================================= -->
+    <div class="tab-pane fade" id="tab-diary" role="tabpanel" tabindex="0">
+        <div class="card cinelog-card p-4">
+            <h5 class="text-white fw-bold mb-3">Film Diary</h5>
+            {% if user_reviews %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" style="background-color: transparent;">
+                        <thead>
+                            <tr class="text-secondary small text-uppercase" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <th scope="col" style="width: 120px;">Date</th>
+                                <th scope="col">Film</th>
+                                <th scope="col" style="width: 100px;">Released</th>
+                                <th scope="col" style="width: 130px;">Rating</th>
+                                <th scope="col">Review Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in user_reviews %}
+                                <tr>
+                                    <td class="text-secondary small">{{ r.watched_date|date:"d M Y"|default:r.created_at|date:"d M Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'movie_detail' r.movie.pk %}" class="text-white fw-bold text-decoration-none hover-accent">
+                                            {{ r.movie.title }}
+                                        </a>
+                                    </td>
+                                    <td class="text-secondary small">{{ r.movie.release_year }}</td>
+                                    <td>
+                                        <span class="stars-green fw-bold">★ {{ r.rating|floatformat:1 }}</span>
+                                    </td>
+                                    <td class="text-light-emphasis small text-truncate" style="max-width: 250px;">
+                                        {{ r.review_text|default:"—" }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-secondary small mb-0">No diary entries logged yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- TAB 5: REVIEWS (Chronological Reviews Stream)              -->
+    <!-- ========================================================= -->
+    <div class="tab-pane fade" id="tab-reviews" role="tabpanel" tabindex="0">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="text-white fw-bold mb-0">Reviews</h5>
+            <span class="text-secondary small">{{ total_reviews_count }} reviews written</span>
+        </div>
+        {% if user_reviews %}
+            <div class="d-flex flex-column gap-3">
+                {% for r in user_reviews %}
+                    <div class="card cinelog-card p-4">
+                        <div class="d-flex gap-3 align-items-start">
+                            <a href="{% url 'movie_detail' r.movie.pk %}">
+                                {% if r.movie.poster_url %}
+                                    <img src="{{ r.movie.poster_url }}" alt="{{ r.movie.title }}" style="width: 60px; height: 90px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer">
+                                {% else %}
+                                    <div class="bg-dark text-secondary d-flex align-items-center justify-content-center" style="width: 60px; height: 90px; border-radius: 4px;">
+                                        <i class="bi bi-film fs-3"></i>
+                                    </div>
+                                {% endif %}
+                            </a>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="text-white fw-bold mb-0">
+                                        <a href="{% url 'movie_detail' r.movie.pk %}" class="text-white text-decoration-none hover-accent">
+                                            {{ r.movie.title }}
+                                        </a>
+                                        <span class="text-secondary small fw-normal ms-1">{{ r.movie.release_year }}</span>
+                                    </h6>
+                                    <span class="text-secondary small">{{ r.watched_date|date:"F j, Y"|default:r.created_at|date:"F j, Y" }}</span>
+                                </div>
+                                <div class="stars-green fw-bold mb-2">
+                                    ★ {{ r.rating|floatformat:1 }}
+                                </div>
+                                {% if r.review_text %}
+                                    <p class="text-light-emphasis small mb-0" style="white-space: pre-line; line-height: 1.6;">
+                                        {{ r.review_text }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5 cinelog-card p-4">
+                <i class="bi bi-chat-quote text-secondary display-4 mb-3"></i>
+                <h5 class="text-white">No Reviews Written Yet</h5>
+                <p class="text-secondary small">Reviews written by {{ profile_user.username }} will appear here.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- TAB 6: WATCHLIST                                          -->
+    <!-- ========================================================= -->
+    <div class="tab-pane fade" id="tab-watchlist" role="tabpanel" tabindex="0">
+        {% if is_own_profile %}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-white fw-bold mb-0">My Watchlist</h5>
+                <span class="text-secondary small">{{ watchlist_count }} films queued</span>
+            </div>
+            {% if watchlist_items %}
+                <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3">
+                    {% for item in watchlist_items %}
+                        <div class="col">
+                            <div class="film-card h-100 d-flex flex-column justify-content-between">
+                                <a href="{% url 'movie_detail' item.movie.pk %}" class="film-poster-wrap text-decoration-none">
+                                    {% if item.movie.poster_url %}
+                                        <img src="{{ item.movie.poster_url }}" alt="{{ item.movie.title }}" class="movie-poster" loading="lazy" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                                    {% else %}
+                                        <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                                            <i class="bi bi-film fs-2 mb-1"></i>
+                                            <span class="small px-1 text-center" style="font-size: 0.7rem;">{{ item.movie.title }}</span>
+                                        </div>
+                                    {% endif %}
+                                </a>
+                                <div class="film-title-bar">
+                                    <div class="text-white small fw-bold text-truncate" title="{{ item.movie.title }}">
+                                        {{ item.movie.title }}
+                                    </div>
+                                    <div class="text-secondary small mb-2" style="font-size: 0.72rem;">{{ item.movie.release_year }}</div>
+                                    <form method="post" action="{% url 'toggle_watchlist' item.movie.pk %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{% url 'public_profile' profile_user.username %}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100 py-1" style="font-size: 0.7rem;">
+                                            <i class="bi bi-x-circle me-1"></i>Remove
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5 cinelog-card p-4">
+                    <i class="bi bi-bookmark-heart text-secondary display-4 mb-3"></i>
+                    <h5 class="text-white">Your Watchlist is Empty</h5>
+                    <p class="text-secondary small">Save films you want to see so you never forget them.</p>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5 cinelog-card p-4">
+                <i class="bi bi-lock text-secondary display-4 mb-3"></i>
+                <h5 class="text-white">Private Watchlist</h5>
+                <p class="text-secondary small">{{ profile_user.username }}'s watchlist is private.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- TABS 7-10: LISTS, LIKES, TAGS, NETWORK (Letterboxd Placeholders) -->
+    <div class="tab-pane fade" id="tab-lists" role="tabpanel" tabindex="0">
+        <div class="text-center py-5 cinelog-card p-4">
+            <i class="bi bi-card-list text-secondary display-4 mb-3"></i>
+            <h5 class="text-white">No Lists Created</h5>
+            <p class="text-secondary small">Curated lists by {{ profile_user.username }} will be shown here.</p>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="tab-likes" role="tabpanel" tabindex="0">
+        <div class="text-center py-5 cinelog-card p-4">
+            <i class="bi bi-heart text-secondary display-4 mb-3"></i>
+            <h5 class="text-white">No Liked Films Yet</h5>
+            <p class="text-secondary small">Films and reviews liked by {{ profile_user.username }} will appear here.</p>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="tab-tags" role="tabpanel" tabindex="0">
+        <div class="text-center py-5 cinelog-card p-4">
+            <i class="bi bi-tags text-secondary display-4 mb-3"></i>
+            <h5 class="text-white">No Tags Recorded</h5>
+            <p class="text-secondary small">Custom tags added to logged films will be listed here.</p>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="tab-network" role="tabpanel" tabindex="0">
+        <div class="text-center py-5 cinelog-card p-4">
+            <i class="bi bi-people text-secondary display-4 mb-3"></i>
+            <h5 class="text-white">Network</h5>
+            <p class="text-secondary small">Followers and following members on CineLog.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- EDIT PROFILE MODAL                                         -->
+<!-- ========================================================= -->
+{% if is_own_profile and edit_form %}
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cinelog-card" style="background-color: #1c2228; border: 1px solid rgba(255, 255, 255, 0.12);">
+            <div class="modal-header border-secondary border-opacity-25 pb-3">
+                <h5 class="modal-title text-white fw-bold d-flex align-items-center gap-2" id="editProfileModalLabel">
+                    <i class="bi bi-person-gear text-success" style="color: #00e054 !important;"></i>
+                    <span>Edit Profile</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'public_profile' profile_user.username %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="edit_profile_submit" value="1">
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label text-secondary small fw-bold">First Name</label>
+                            {{ edit_form.first_name }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-secondary small fw-bold">Last Name</label>
+                            {{ edit_form.last_name }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">Username <span class="text-danger">*</span></label>
+                        {{ edit_form.username }}
+                        <div class="form-text text-secondary" style="font-size: 0.72rem;">
+                            Updating your username will seamlessly change your profile URL.
+                        </div>
+                    </div>
+                    <!-- Profile Picture (Direct File Upload & Preview) -->
+                    <div class="mb-3">
+                        <label for="id_avatar" class="form-label text-secondary small fw-bold d-flex justify-content-between align-items-center">
+                            <span>Profile Picture (Upload Image)</span>
+                            {% if profile_user.profile.avatar or profile_user.profile.avatar_url %}
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50" style="font-size: 0.65rem;">Active</span>
+                            {% endif %}
+                        </label>
+
+                        {% if profile_user.profile.avatar or profile_user.profile.avatar_url %}
+                            <div class="d-flex align-items-center gap-3 mb-2 p-2 rounded-2" style="background-color: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);">
+                                <div class="overflow-hidden rounded-circle border border-success shadow-sm" style="width: 48px; height: 48px; flex-shrink: 0;">
+                                    {% if profile_user.profile.avatar %}
+                                        <img src="{{ profile_user.profile.avatar.url }}" alt="Current avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                    {% else %}
+                                        <img src="{{ profile_user.profile.avatar_url }}" alt="Current avatar" style="width: 100%; height: 100%; object-fit: cover;" referrerpolicy="no-referrer">
+                                    {% endif %}
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="text-white small fw-semibold">Current Profile Picture</div>
+                                    <div class="text-secondary text-truncate" style="font-size: 0.72rem;">
+                                        {% if profile_user.profile.avatar %}Uploaded file active{% else %}{{ profile_user.profile.avatar_url }}{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <input type="file" name="avatar" class="form-control" accept="image/*" id="id_avatar">
+                        <div class="form-text text-secondary" style="font-size: 0.72rem;">
+                            Upload a JPEG, PNG, WEBP, or GIF image from your device.
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label text-secondary small fw-bold">Bio</label>
+                        {{ edit_form.bio }}
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary border-opacity-25 pt-3">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-cinelog-accent fw-bold px-3">
+                        <i class="bi bi-check2 me-1"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+

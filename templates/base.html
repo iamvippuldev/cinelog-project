@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CineLog - Film Review & Watchlist{% endblock %}</title>
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --cinelog-bg: #14181c;
+            --cinelog-surface: #1f252d;
+            --cinelog-surface-hover: #2c3440;
+            --cinelog-border: #2c3440;
+            --cinelog-text-muted: #9ab;
+            --cinelog-accent: #00e054;
+            --cinelog-accent-hover: #00c048;
+        }
+
+        html, body {
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            height: auto !important;
+            min-height: 100%;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--cinelog-bg);
+            color: #d8e0e8;
+            display: flex;
+            flex-direction: column;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .navbar-cinelog {
+            background-color: rgba(20, 24, 28, 0.95) !important;
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--cinelog-border);
+        }
+
+        .navbar.sticky-top {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+
+        .nav-link.nav-active-green, .nav-link.nav-active-green:hover {
+            color: #00e054 !important;
+            font-weight: 600;
+        }
+
+        /* Fixed aspect-ratio and styling to prevent poster collapse */
+        .movie-poster, .card-img-top, .movie-card img, .poster-wrap img {
+            width: 100% !important;
+            aspect-ratio: 2 / 3 !important;
+            object-fit: cover !important;
+            background-color: #1e252d !important;
+            border-radius: 6px;
+            display: block;
+        }
+
+        .poster-fallback {
+            width: 100% !important;
+            aspect-ratio: 2 / 3 !important;
+            background-color: #1e252d !important;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #9ab;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #ffffff !important;
+            font-size: 1.4rem;
+        }
+
+        .navbar-brand .accent-dot {
+            color: var(--cinelog-accent);
+        }
+
+        .nav-link {
+            color: var(--cinelog-text-muted) !important;
+            font-weight: 500;
+            transition: color 0.15s ease-in-out;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff !important;
+        }
+
+        .btn-cinelog-accent {
+            background-color: var(--cinelog-accent);
+            border-color: var(--cinelog-accent);
+            color: #0b1c10;
+            font-weight: 600;
+        }
+
+        .btn-cinelog-accent:hover {
+            background-color: var(--cinelog-accent-hover);
+            border-color: var(--cinelog-accent-hover);
+            color: #05140a;
+        }
+
+        .cinelog-card {
+            background-color: var(--cinelog-surface);
+            border: 1px solid var(--cinelog-border);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .form-control, .form-select {
+            background-color: #161b22;
+            border-color: #30363d;
+            color: #e6edf3;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: #1c2128;
+            border-color: var(--cinelog-accent);
+            color: #ffffff;
+            box-shadow: 0 0 0 0.25rem rgba(0, 224, 84, 0.25);
+        }
+
+        footer {
+            margin-top: auto;
+            border-top: 1px solid var(--cinelog-border);
+            background-color: #0f1215;
+            color: var(--cinelog-text-muted);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-cinelog sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'movie_list' %}">
+                <i class="bi bi-film fs-4 text-success" style="color: var(--cinelog-accent) !important;"></i>
+                <span>CineLog<span class="accent-dot">.</span></span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <!-- Left Nav Links -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" id="nav-movies-link" href="/#explore-films">
+                            <i class="bi bi-camera-reels me-1"></i>Movies
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'watchlist' %}">
+                            <i class="bi bi-bookmark-heart me-1"></i>Watchlist
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'recommendations' %}active nav-active-green{% endif %}" href="{% url 'recommendations' %}">
+                            <i class="bi bi-robot me-1" style="color: var(--cinelog-accent) !important;"></i>AI Picks
+                        </a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'public_profile' user.username %}">
+                                <i class="bi bi-journal-text me-1"></i>My Profile / Diary
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+
+                <!-- Right Auth Navigation -->
+                <div class="d-flex align-items-center gap-2">
+                    {% if user.is_authenticated %}
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 text-white" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if user.profile.avatar %}
+                                    <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="rounded-circle border border-success border-opacity-50" style="width: 22px; height: 22px; object-fit: cover;">
+                                {% elif user.profile.avatar_url %}
+                                    <img src="{{ user.profile.avatar_url }}" alt="{{ user.username }}" class="rounded-circle border border-success border-opacity-50" style="width: 22px; height: 22px; object-fit: cover;" referrerpolicy="no-referrer">
+                                {% else %}
+                                    <i class="bi bi-person-circle text-success fs-6" style="color: var(--cinelog-accent) !important;"></i>
+                                {% endif %}
+                                <span class="fw-semibold">{{ user.username }}</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark cinelog-card shadow-lg py-2">
+                                <li>
+                                    <div class="dropdown-header d-flex align-items-center gap-2 py-2">
+                                        {% if user.profile.avatar %}
+                                            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="rounded-circle border border-success" style="width: 32px; height: 32px; object-fit: cover;">
+                                        {% elif user.profile.avatar_url %}
+                                            <img src="{{ user.profile.avatar_url }}" alt="{{ user.username }}" class="rounded-circle border border-success" style="width: 32px; height: 32px; object-fit: cover;" referrerpolicy="no-referrer">
+                                        {% else %}
+                                            <i class="bi bi-person-circle fs-4 text-secondary"></i>
+                                        {% endif %}
+                                        <div class="overflow-hidden">
+                                            <div class="text-white fw-bold small text-truncate" style="max-width: 140px;">{{ user.username }}</div>
+                                            <div class="text-secondary" style="font-size: 0.7rem;">CineLog Member</div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider border-secondary-subtle"></li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-light" href="{% url 'public_profile' user.username %}">
+                                        <i class="bi bi-person text-success" style="color: var(--cinelog-accent) !important;"></i>
+                                        <span>Profile</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-light" href="{% url 'public_profile' user.username %}">
+                                        <i class="bi bi-journal-text text-info"></i>
+                                        <span>Diary / My Reviews</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-light" href="{% url 'watchlist' %}">
+                                        <i class="bi bi-bookmark-heart text-warning"></i>
+                                        <span>Watchlist</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-light" href="{% url 'recommendations' %}">
+                                        <i class="bi bi-robot text-success" style="color: var(--cinelog-accent) !important;"></i>
+                                        <span>AI Picks For You</span>
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider border-secondary-subtle"></li>
+                                <li>
+                                    <form method="post" action="{% url 'logout' %}" class="m-0 p-0">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 py-2 text-danger">
+                                            <i class="bi bi-box-arrow-right"></i>
+                                            <span>Logout</span>
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-sm btn-outline-light d-flex align-items-center gap-1">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            <span>Login</span>
+                        </a>
+                        <a href="{% url 'register' %}" class="btn btn-sm btn-cinelog-accent d-flex align-items-center gap-1">
+                            <i class="bi bi-person-plus"></i>
+                            <span>Register</span>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show cinelog-card" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <main class="container my-4 flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-3 text-center small">
+        <div class="container">
+            <span>&copy; 2026 CineLog &bull; Inspired by Letterboxd &bull; Track films you've watched, save those you want to see.</span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5.3 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <!-- Dynamic Movies Navbar Highlight on Scroll -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const exploreSection = document.getElementById('explore-films');
+            const moviesNavLink = document.getElementById('nav-movies-link');
+
+            if (exploreSection && moviesNavLink) {
+                const updateMoviesNavActive = function() {
+                    const rect = exploreSection.getBoundingClientRect();
+                    // When user scrolls down into or past the Explore Films section
+                    if (rect.top <= 140 && rect.bottom >= 100) {
+                        moviesNavLink.classList.add('nav-active-green');
+                    } else {
+                        moviesNavLink.classList.remove('nav-active-green');
+                    }
+                };
+
+                window.addEventListener('scroll', updateMoviesNavActive, { passive: true });
+                updateMoviesNavActive();
+            }
+        });
+    </script>
+
+    <!-- Poster Error Fallback Handler to Prevent Layout Collapse -->
+    <script>
+        function handlePosterError(img) {
+            if (!img || img.dataset.fallbackApplied) return;
+            img.dataset.fallbackApplied = "true";
+            const title = img.getAttribute('alt') || 'Film';
+            const placeholder = document.createElement('div');
+            placeholder.className = 'poster-fallback';
+            placeholder.innerHTML = `
+                <i class="bi bi-film fs-2 mb-2" style="color: #64748b;"></i>
+                <span class="small fw-semibold text-white-50 text-truncate w-100 px-1" style="font-size: 0.72rem;" title="${title}">${title}</span>
+            `;
+            if (img.parentElement) {
+                img.replaceWith(placeholder);
+            }
+        }
+
+        window.addEventListener('error', function(e) {
+            if (e.target && e.target.tagName === 'IMG' && (
+                e.target.classList.contains('movie-poster') ||
+                e.target.classList.contains('card-img-top') ||
+                e.target.closest('.poster-wrap') ||
+                e.target.closest('.poster-card') ||
+                e.target.closest('.movie-card')
+            )) {
+                handlePosterError(e.target);
+            }
+        }, true);
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - CineLog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4 mb-5">
+    <div class="col-12 col-sm-10 col-md-8 col-lg-5">
+        <div class="card cinelog-card p-4">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-film fs-1 text-success" style="color: var(--cinelog-accent) !important;"></i>
+                    <h2 class="h4 text-white fw-bold mt-2">Welcome Back</h2>
+                    <p class="text-secondary small">Sign in to track films, log reviews, and curate your watchlist.</p>
+                </div>
+
+                {% if form.errors %}
+                    <div class="alert alert-danger cinelog-card py-2 small" role="alert">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        Your username and password didn't match. Please try again.
+                    </div>
+                {% endif %}
+
+                {% if next %}
+                    {% if user.is_authenticated %}
+                        <div class="alert alert-warning cinelog-card py-2 small" role="alert">
+                            Your account doesn't have access to this page. To proceed, please login with an account that has access.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info cinelog-card py-2 small" role="alert">
+                            Please sign in to view this page.
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                <form method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next|default:'/' }}">
+
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label text-secondary small fw-semibold">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-secondary">
+                                <i class="bi bi-person"></i>
+                            </span>
+                            <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username" class="form-control" placeholder="Enter your username">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_password" class="form-label text-secondary small fw-semibold">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-secondary">
+                                <i class="bi bi-lock"></i>
+                            </span>
+                            <input type="password" name="password" autocomplete="current-password" required id="id_password" class="form-control" placeholder="Enter your password">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-cinelog-accent w-100 py-2 mb-3">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                    </button>
+                </form>
+
+                <div class="text-center pt-3 border-top border-secondary-subtle">
+                    <p class="text-secondary small mb-0">
+                        Don't have an account?
+                        <a href="{% url 'register' %}" class="text-success text-decoration-none fw-semibold" style="color: var(--cinelog-accent) !important;">
+                            Create an account
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

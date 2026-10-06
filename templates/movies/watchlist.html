@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}My Watchlist - CineLog{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary-subtle">
+    <div>
+        <h1 class="h3 text-white fw-bold mb-1">
+            <i class="bi bi-bookmark-heart text-success me-2" style="color: var(--cinelog-accent) !important;"></i>
+            My Watchlist
+        </h1>
+        <p class="text-secondary small mb-0">Films queued up to watch next.</p>
+    </div>
+    {% if watchlist_items %}
+        <span class="badge bg-secondary px-3 py-2 fs-6">{{ watchlist_items|length }} film{{ watchlist_items|length|pluralize }}</span>
+    {% endif %}
+</div>
+
+{% if watchlist_items %}
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3">
+        {% for item in watchlist_items %}
+            <div class="col">
+                <div class="card cinelog-card h-100 position-relative overflow-hidden d-flex flex-column justify-content-between">
+                    <a href="{% url 'movie_detail' item.movie.pk %}" class="text-decoration-none">
+                        {% if item.movie.poster_url %}
+                            <img src="{{ item.movie.poster_url }}" class="card-img-top movie-poster" alt="{{ item.movie.title }}" style="height: 240px; object-fit: cover;" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                        {% else %}
+                            <div class="d-flex flex-column align-items-center justify-content-center bg-dark text-secondary" style="height: 240px;">
+                                <i class="bi bi-film fs-1 mb-2"></i>
+                                <span class="small px-2 text-center">{{ item.movie.title }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="p-2">
+                            <h6 class="card-title text-white small fw-bold mb-1 text-truncate" title="{{ item.movie.title }}">
+                                {{ item.movie.title }}
+                            </h6>
+                            <span class="text-secondary" style="font-size: 0.75rem;">{{ item.movie.release_year }}</span>
+                        </div>
+                    </a>
+
+                    <div class="p-2 pt-0">
+                        <form method="post" action="{% url 'toggle_watchlist' item.movie.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'watchlist' %}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger w-100 py-1" style="font-size: 0.75rem;" title="Remove from watchlist">
+                                <i class="bi bi-trash3 me-1"></i>Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5 cinelog-card p-4">
+        <i class="bi bi-bookmark-plus text-secondary display-3 mb-3"></i>
+        <h3 class="h4 text-white">Your Watchlist is Empty</h3>
+        <p class="text-secondary small">Explore movies and add them to your watchlist to keep track of what you want to watch.</p>
+        <a href="{% url 'movie_list' %}" class="btn btn-sm btn-cinelog-accent mt-2">
+            <i class="bi bi-camera-reels me-1"></i>Browse Movies
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

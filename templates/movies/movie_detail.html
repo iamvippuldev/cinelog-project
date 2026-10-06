@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}{{ movie.title }} ({{ movie.release_year }}) - CineLog{% endblock %}
+
+{% block extra_head %}
+<style>
+    .detail-poster {
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        width: 100%;
+        max-height: 440px;
+        object-fit: cover;
+    }
+    .rating-pill {
+        background: rgba(255, 193, 7, 0.15);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.4);
+        padding: 0.35rem 0.75rem;
+        border-radius: 9999px;
+        font-weight: 700;
+    }
+    .review-bubble {
+        background-color: #1a2027;
+        border: 1px solid #2d3748;
+        border-radius: 0.65rem;
+    }
+    .hover-accent:hover {
+        color: var(--cinelog-accent) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Movie Header & Details -->
+<div class="card cinelog-card p-4 mb-4">
+    <div class="row g-4">
+        <!-- Poster & Watchlist Action -->
+        <div class="col-12 col-md-4 col-lg-3 text-center">
+            {% if movie.poster_url %}
+                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="detail-poster movie-poster mb-3" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+            {% else %}
+                <div class="d-flex flex-column align-items-center justify-content-center bg-dark text-secondary detail-poster mb-3" style="height: 360px;">
+                    <i class="bi bi-film display-2 mb-2"></i>
+                    <span>{{ movie.title }}</span>
+                </div>
+            {% endif %}
+
+            <!-- Watchlist Toggle Button -->
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'toggle_watchlist' movie.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    {% if in_watchlist %}
+                        <button type="submit" class="btn btn-warning w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold">
+                            <i class="bi bi-bookmark-check-fill"></i>
+                            <span>In Watchlist (Remove)</span>
+                        </button>
+                    {% else %}
+                        <button type="submit" class="btn btn-outline-light w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold">
+                            <i class="bi bi-bookmark-plus"></i>
+                            <span>Add to Watchlist</span>
+                        </button>
+                    {% endif %}
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-bookmark-plus"></i>
+                    <span>Log in to Add to Watchlist</span>
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Movie Information -->
+        <div class="col-12 col-md-8 col-lg-9 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <h1 class="h2 text-white fw-bold mb-0">{{ movie.title }}</h1>
+                    <span class="text-secondary fs-4">({{ movie.release_year }})</span>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-3 mb-3 text-secondary small">
+                    {% if movie.director %}
+                        <div>
+                            <span class="text-secondary-subtle">Directed by</span>
+                            <span class="text-white fw-semibold ms-1">{{ movie.director }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if movie.genre %}
+                        <div>
+                            <span class="badge bg-secondary-subtle text-light-emphasis px-2 py-1">
+                                {{ movie.genre }}
+                            </span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Rating summary -->
+                <div class="d-flex align-items-center gap-3 my-3">
+                    {% if movie.avg_rating %}
+                        <div class="rating-pill d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-star-fill"></i>
+                            <span class="fs-5">{{ movie.avg_rating|floatformat:1 }}</span>
+                            <span class="small opacity-75">/ 5</span>
+                        </div>
+                        <span class="text-secondary small">{{ movie.review_count }} review{{ movie.review_count|pluralize }}</span>
+                    {% elif movie.average_rating %}
+                        <div class="rating-pill d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-star-fill"></i>
+                            <span class="fs-5">{{ movie.average_rating|floatformat:1 }}</span>
+                            <span class="small opacity-75">/ 5</span>
+                        </div>
+                        <span class="text-secondary small">{{ movie.review_count }} review{{ movie.review_count|pluralize }}</span>
+                    {% else %}
+                        <span class="badge bg-dark border border-secondary text-secondary px-3 py-2">
+                            <i class="bi bi-star me-1"></i>No ratings yet
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- Synopsis -->
+                {% if movie.synopsis %}
+                    <div class="mt-3">
+                        <h6 class="text-secondary small text-uppercase fw-bold mb-2">Synopsis</h6>
+                        <p class="text-light-emphasis" style="line-height: 1.7;">{{ movie.synopsis }}</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="pt-3 border-top border-secondary-subtle d-flex gap-2">
+                <a href="{% url 'movie_list' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Movies
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reviews Section -->
+<div class="row g-4">
+    <!-- Left / Top: Review Submission Form (if logged in) -->
+    <div class="col-12 col-lg-5">
+        <div class="card cinelog-card p-4">
+            <h4 class="h5 text-white fw-bold mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-pencil-square text-success" style="color: var(--cinelog-accent) !important;"></i>
+                {% if user_review %}Edit Your Review{% else %}Log & Review This Film{% endif %}
+            </h4>
+
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'movie_detail' movie.pk %}">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.rating.id_for_label }}" class="form-label text-secondary small fw-semibold">
+                            Your Rating <span class="text-danger">*</span>
+                        </label>
+                        {{ form.rating }}
+                        {% if form.rating.errors %}
+                            <div class="text-danger small mt-1">{{ form.rating.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.watched_date.id_for_label }}" class="form-label text-secondary small fw-semibold">
+                            Date Watched (optional)
+                        </label>
+                        {{ form.watched_date }}
+                        {% if form.watched_date.errors %}
+                            <div class="text-danger small mt-1">{{ form.watched_date.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.review_text.id_for_label }}" class="form-label text-secondary small fw-semibold">
+                            Your Review
+                        </label>
+                        {{ form.review_text }}
+                        {% if form.review_text.errors %}
+                            <div class="text-danger small mt-1">{{ form.review_text.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-cinelog-accent w-100 py-2">
+                        <i class="bi bi-check2-circle me-1"></i>
+                        {% if user_review %}Update Review{% else %}Submit Review{% endif %}
+                    </button>
+                </form>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-lock text-secondary display-6 mb-2"></i>
+                    <p class="text-secondary small mb-3">Sign in to rate, log, and write a review for this film.</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Log In
+                        </a>
+                        <a href="{% url 'register' %}" class="btn btn-sm btn-cinelog-accent">
+                            <i class="bi bi-person-plus me-1"></i>Register
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right: Community Reviews List -->
+    <div class="col-12 col-lg-7">
+        <div class="card cinelog-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="h5 text-white fw-bold mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-chat-quote text-success" style="color: var(--cinelog-accent) !important;"></i>
+                    Community Reviews
+                </h4>
+                <span class="badge bg-secondary">{{ reviews|length }}</span>
+            </div>
+
+            {% if reviews %}
+                <div class="d-flex flex-column gap-3">
+                    {% for r in reviews %}
+                        <div class="review-bubble p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <a href="{% url 'public_profile' r.user.username %}" class="text-decoration-none">
+                                        {% if r.user.profile.avatar %}
+                                            <img src="{{ r.user.profile.avatar.url }}" alt="{{ r.user.username }}" class="rounded-circle border border-success border-opacity-50" style="width: 32px; height: 32px; object-fit: cover;">
+                                        {% elif r.user.profile.avatar_url %}
+                                            <img src="{{ r.user.profile.avatar_url }}" alt="{{ r.user.username }}" class="rounded-circle border border-success border-opacity-50" style="width: 32px; height: 32px; object-fit: cover;" referrerpolicy="no-referrer">
+                                        {% else %}
+                                            <i class="bi bi-person-circle fs-4 text-success" style="color: var(--cinelog-accent) !important;"></i>
+                                        {% endif %}
+                                    </a>
+                                    <div>
+                                        <a href="{% url 'public_profile' r.user.username %}" class="text-white fw-semibold small text-decoration-none hover-accent" title="View {{ r.user.username }}'s profile">
+                                            {{ r.user.username }}
+                                        </a>
+                                        {% if r.watched_date %}
+                                            <div class="text-secondary" style="font-size: 0.72rem;">
+                                                <i class="bi bi-calendar3 me-1"></i>Watched on {{ r.watched_date|date:"M j, Y" }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-1 rating-pill" style="font-size: 0.8rem; padding: 0.15rem 0.5rem;">
+                                    <i class="bi bi-star-fill"></i>
+                                    <span>{{ r.rating|floatformat:1 }}</span>
+                                </div>
+                            </div>
+
+                            {% if r.review_text %}
+                                <p class="text-light-emphasis small mb-2" style="white-space: pre-wrap; line-height: 1.7;">{{ r.review_text }}</p>
+                            {% endif %}
+
+                            <div class="text-secondary text-end" style="font-size: 0.7rem;">
+                                Logged {{ r.created_at|date:"M j, Y" }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4 text-secondary">
+                    <i class="bi bi-chat-square-dots fs-1 mb-2"></i>
+                    <p class="small mb-0">No reviews yet for this movie. Be the first to share your thoughts!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

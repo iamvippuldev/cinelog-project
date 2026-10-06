@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.username }}'s Profile & Diary - CineLog{% endblock %}
+
+{% block extra_head %}
+<style>
+    .profile-avatar {
+        width: 72px;
+        height: 72px;
+        background: linear-gradient(135deg, #1f252d, #2c3440);
+        border: 2px solid var(--cinelog-accent);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+        color: var(--cinelog-accent);
+    }
+    .stat-pill {
+        background-color: #161b22;
+        border: 1px solid var(--cinelog-border);
+        border-radius: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        text-align: center;
+        min-width: 110px;
+    }
+    .diary-table th {
+        background-color: #161b22;
+        color: var(--cinelog-text-muted);
+        font-weight: 600;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--cinelog-border);
+    }
+    .diary-table td {
+        background-color: var(--cinelog-surface);
+        border-bottom: 1px solid var(--cinelog-border);
+        vertical-align: middle;
+    }
+    .nav-tabs .nav-link {
+        color: var(--cinelog-text-muted);
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-weight: 600;
+        padding: 0.75rem 1.25rem;
+    }
+    .nav-tabs .nav-link.active {
+        color: #fff !important;
+        background: transparent;
+        border-bottom-color: var(--cinelog-accent);
+    }
+    .diary-thumb {
+        width: 48px;
+        height: 68px;
+        object-fit: cover;
+        border-radius: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card cinelog-card p-4 mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="profile-avatar shadow-sm overflow-hidden">
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% elif user.profile.avatar_url %}
+                    <img src="{{ user.profile.avatar_url }}" alt="{{ user.username }}" style="width: 100%; height: 100%; object-fit: cover;" referrerpolicy="no-referrer">
+                {% else %}
+                    <i class="bi bi-person-fill"></i>
+                {% endif %}
+            </div>
+            <div>
+                <h1 class="h3 text-white fw-bold mb-1">{{ user.username }}</h1>
+                <div class="d-flex flex-wrap align-items-center gap-3 text-secondary small">
+                    <span>
+                        <i class="bi bi-calendar-event me-1"></i>Member since {{ user.date_joined|date:"F Y" }}
+                    </span>
+                    {% if user.email %}
+                        <span>
+                            <i class="bi bi-envelope me-1"></i>{{ user.email }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Stat Counters -->
+        <div class="d-flex gap-2 flex-wrap">
+            <div class="stat-pill">
+                <div class="fs-4 fw-bold text-success" style="color: var(--cinelog-accent) !important;">{{ total_reviews }}</div>
+                <div class="small text-secondary">Films Reviewed</div>
+            </div>
+            <div class="stat-pill">
+                <div class="fs-4 fw-bold text-warning">{{ watchlist_count }}</div>
+                <div class="small text-secondary">Watchlist</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs mb-4 border-secondary" id="profileTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active d-flex align-items-center gap-2" id="diary-tab" data-bs-toggle="tab" data-bs-target="#diary-pane" type="button" role="tab" aria-controls="diary-pane" aria-selected="true">
+            <i class="bi bi-journal-text text-success" style="color: var(--cinelog-accent) !important;"></i>
+            <span>Diary / My Reviews</span>
+            <span class="badge bg-dark border border-secondary text-secondary">{{ total_reviews }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link d-flex align-items-center gap-2" id="watchlist-tab" data-bs-toggle="tab" data-bs-target="#watchlist-pane" type="button" role="tab" aria-controls="watchlist-pane" aria-selected="false">
+            <i class="bi bi-bookmark-heart text-warning"></i>
+            <span>Watchlist</span>
+            <span class="badge bg-dark border border-secondary text-secondary">{{ watchlist_count }}</span>
+        </button>
+    </li>
+</ul>
+
+<!-- Tabs Content -->
+<div class="tab-content" id="profileTabsContent">
+    <!-- Tab 1: Film Diary -->
+    <div class="tab-pane fade show active" id="diary-pane" role="tabpanel" aria-labelledby="diary-tab" tabindex="0">
+        {% if reviews %}
+            <div class="card cinelog-card overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table diary-table mb-0 text-white">
+                        <thead>
+                            <tr>
+                                <th style="width: 140px;">Watched Date</th>
+                                <th style="width: 70px;">Film</th>
+                                <th>Title & Year</th>
+                                <th style="width: 120px;">Rating</th>
+                                <th>Review</th>
+                                <th style="width: 90px;" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in reviews %}
+                                <tr>
+                                    <td class="text-secondary small">
+                                        {% if r.watched_date %}
+                                            <i class="bi bi-calendar3 me-1 text-light-emphasis"></i>{{ r.watched_date|date:"M j, Y" }}
+                                        {% else %}
+                                            <span class="opacity-50">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'movie_detail' r.movie.pk %}">
+                                            {% if r.movie.poster_url %}
+                                                <img src="{{ r.movie.poster_url }}" alt="{{ r.movie.title }}" class="diary-thumb movie-poster shadow-sm" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                                            {% else %}
+                                                <div class="diary-thumb bg-dark d-flex align-items-center justify-content-center text-secondary">
+                                                    <i class="bi bi-film"></i>
+                                                </div>
+                                            {% endif %}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'movie_detail' r.movie.pk %}" class="text-white fw-bold text-decoration-none d-block">
+                                            {{ r.movie.title }}
+                                        </a>
+                                        <span class="text-secondary small">{{ r.movie.release_year }} &bull; {{ r.movie.genre }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-inline-flex align-items-center gap-1 text-warning fw-bold small">
+                                            <i class="bi bi-star-fill"></i>
+                                            <span>{{ r.rating|floatformat:1 }}</span>
+                                            <span class="text-secondary opacity-75">/5</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if r.review_text %}
+                                            <div class="text-light-emphasis small text-truncate" style="max-width: 320px;" title="{{ r.review_text }}">
+                                                "{{ r.review_text }}"
+                                            </div>
+                                        {% else %}
+                                            <span class="text-secondary small opacity-50">No written text</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{% url 'movie_detail' r.movie.pk %}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="View or edit review">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center py-5 cinelog-card p-4">
+                <i class="bi bi-journal-x text-secondary display-3 mb-3"></i>
+                <h3 class="h4 text-white">Your Diary is Empty</h3>
+                <p class="text-secondary small">Start logging films you have watched and your ratings will appear here chronologically.</p>
+                <a href="{% url 'movie_list' %}" class="btn btn-sm btn-cinelog-accent mt-2">
+                    <i class="bi bi-camera-reels me-1"></i>Explore Movies to Log
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Tab 2: Watchlist -->
+    <div class="tab-pane fade" id="watchlist-pane" role="tabpanel" aria-labelledby="watchlist-tab" tabindex="0">
+        {% if watchlist_items %}
+            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3">
+                {% for item in watchlist_items %}
+                    <div class="col">
+                        <div class="card cinelog-card h-100 position-relative overflow-hidden d-flex flex-column justify-content-between">
+                            <a href="{% url 'movie_detail' item.movie.pk %}" class="text-decoration-none">
+                                {% if item.movie.poster_url %}
+                                    <img src="{{ item.movie.poster_url }}" class="card-img-top movie-poster" alt="{{ item.movie.title }}" style="height: 220px; object-fit: cover;" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                                {% else %}
+                                    <div class="d-flex flex-column align-items-center justify-content-center bg-dark text-secondary" style="height: 220px;">
+                                        <i class="bi bi-film fs-1 mb-2"></i>
+                                        <span class="small px-2 text-center">{{ item.movie.title }}</span>
+                                    </div>
+                                {% endif %}
+                                <div class="p-2">
+                                    <h6 class="card-title text-white small fw-bold mb-1 text-truncate" title="{{ item.movie.title }}">
+                                        {{ item.movie.title }}
+                                    </h6>
+                                    <span class="text-secondary" style="font-size: 0.75rem;">{{ item.movie.release_year }}</span>
+                                </div>
+                            </a>
+
+                            <div class="p-2 pt-0">
+                                <form method="post" action="{% url 'toggle_watchlist' item.movie.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{% url 'profile' %}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100 py-1" style="font-size: 0.75rem;">
+                                        <i class="bi bi-trash3 me-1"></i>Remove
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5 cinelog-card p-4">
+                <i class="bi bi-bookmark-plus text-secondary display-3 mb-3"></i>
+                <h3 class="h4 text-white">Your Watchlist is Empty</h3>
+                <p class="text-secondary small">Explore movies and add them to your watchlist to keep track of films you want to see.</p>
+                <a href="{% url 'movie_list' %}" class="btn btn-sm btn-cinelog-accent mt-2">
+                    <i class="bi bi-camera-reels me-1"></i>Browse Movies
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

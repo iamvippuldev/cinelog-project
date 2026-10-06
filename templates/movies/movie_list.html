@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+
+{% block title %}CineLog - Track films you’ve watched. Save those you want to see.{% endblock %}
+
+{% block extra_head %}
+<style>
+    .letterboxd-hero {
+        background: radial-gradient(circle at 50% 20%, #1f2730 0%, #14181c 70%);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+        padding: 3.5rem 1.5rem 2.5rem;
+    }
+    .poster-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        text-decoration: none;
+        display: block;
+        background-color: #1c2228;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    .poster-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 24px rgba(0, 224, 84, 0.16) !important;
+        border-color: #00e054 !important;
+    }
+    .poster-wrap {
+        position: relative;
+        width: 100% !important;
+        aspect-ratio: 2 / 3 !important;
+        height: auto !important;
+        background-color: #1e252d !important;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .movie-poster, .card-img-top, .movie-card img, .poster-wrap img {
+        width: 100% !important;
+        aspect-ratio: 2 / 3 !important;
+        object-fit: cover !important;
+        background-color: #1e252d !important;
+        border-radius: 6px;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+    .poster-card:hover .poster-wrap img {
+        transform: scale(1.05);
+    }
+    .review-card {
+        background-color: #1c2228;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 0.5rem;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .review-card:hover {
+        border-color: rgba(0, 224, 84, 0.4);
+        transform: translateY(-3px);
+    }
+    .section-title {
+        color: #9ab;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .stars-green {
+        color: #00e054;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+    }
+    .hover-accent:hover {
+        color: #00e054 !important;
+    }
+    /* Carousel controls & styles for LATEST ADDED FILMS */
+    #latestMoviesCarousel {
+        border: none !important;
+        outline: none !important;
+    }
+    .latest-movie-card {
+        background: linear-gradient(135deg, #1c242c 0%, #151a1f 100%);
+        border: 1px solid #2a3440;
+        border-radius: 0.75rem;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        outline: none;
+    }
+    .latest-movie-card:hover {
+        transform: translateY(-2px);
+        border-color: #3b4856 !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    }
+    .latest-movie-card:hover .movie-card-title {
+        color: #00e054 !important;
+    }
+    #explore-films {
+        scroll-margin-top: 90px;
+    }
+    #latestMoviesCarousel .carousel-indicators [data-bs-target] {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin: 0 4px;
+        background-color: rgba(255, 255, 255, 0.25);
+        border: none;
+        transition: all 0.2s ease;
+    }
+    #latestMoviesCarousel .carousel-indicators .active {
+        background-color: #00e054;
+        width: 24px;
+        border-radius: 6px;
+    }
+    #latestMoviesCarousel .carousel-control-prev,
+    #latestMoviesCarousel .carousel-control-next {
+        width: 42px;
+        height: 42px;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgba(20, 24, 28, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+        z-index: 5;
+    }
+    #latestMoviesCarousel:hover .carousel-control-prev,
+    #latestMoviesCarousel:hover .carousel-control-next {
+        opacity: 1;
+    }
+    #latestMoviesCarousel .carousel-control-prev:hover,
+    #latestMoviesCarousel .carousel-control-next:hover {
+        background-color: #00e054;
+        border-color: #00e054;
+        color: #14181c;
+    }
+    #latestMoviesCarousel .carousel-control-prev {
+        left: -18px;
+    }
+    #latestMoviesCarousel .carousel-control-next {
+        right: -18px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if not query %}
+    {% if not request.user.is_authenticated %}
+        <!-- ========================================================= -->
+        <!-- STATE A: BEFORE LOGIN (Letterboxd Style Hero + Showcase)  -->
+        <!-- ========================================================= -->
+        <div class="letterboxd-hero text-center mb-5 shadow-lg">
+            <h1 class="display-6 text-white fw-bold mb-3" style="letter-spacing: -0.5px;">
+                Track films you’ve watched. Save those you want to see.
+            </h1>
+            <p class="text-secondary fs-6 mb-4 mx-auto" style="max-width: 620px; color: #9ab !important;">
+                The social network for film lovers. Tell your friends what’s good, keep an online diary, and discover films you’ll love.
+            </p>
+            <div class="d-flex justify-content-center align-items-center gap-3 mb-4">
+                <a href="{% url 'register' %}" class="btn btn-cinelog-accent px-4 py-2 fw-bold d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-star-fill"></i>
+                    <span>Get started — it’s free</span>
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-secondary px-4 py-2 text-white">
+                    Sign In
+                </a>
+            </div>
+
+            <!-- Horizontal showcase of 6 latest added films -->
+            {% if latest_movies %}
+                <div class="mt-4 pt-3 text-start">
+                    <div class="section-title">
+                        <span>Latest Films Added to CineLog</span>
+                        <a href="{% url 'movie_list' %}#explore-films" class="text-decoration-none text-secondary hover-accent small fw-normal">Browse All</a>
+                    </div>
+                    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-5 g-3">
+                        {% for movie in latest_movies %}
+                            <div class="col">
+                                <a href="{% url 'movie_detail' movie.pk %}" class="poster-card h-100">
+                                    <div class="poster-wrap">
+                                        {% if movie.poster_url %}
+                                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="movie-poster" loading="lazy" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                                        {% else %}
+                                            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                                                <i class="bi bi-film fs-2 mb-1"></i>
+                                                <span class="small px-1 text-center" style="font-size: 0.7rem;">{{ movie.title }}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="p-2">
+                                        <div class="text-white small fw-bold text-truncate" title="{{ movie.title }}">{{ movie.title }}</div>
+                                        <div class="d-flex justify-content-between text-secondary" style="font-size: 0.72rem;">
+                                            <span>{{ movie.release_year }}</span>
+                                            {% if movie.avg_rating %}
+                                                <span class="stars-green">★ {{ movie.avg_rating|floatformat:1 }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+    {% else %}
+        <!-- ========================================================= -->
+        <!-- STATE B: AFTER LOGIN (Matching Letterboxd Dashboard)       -->
+        <!-- ========================================================= -->
+        <div class="text-center my-4 py-2">
+            {% if user_reviews_count > 0 %}
+                <h1 class="h3 text-white fw-bold mb-2">
+                    Welcome back, {{ request.user.username }}. Here’s what we’ve been watching...
+                </h1>
+                <p class="text-secondary small mb-0" style="color: #9ab !important;">
+                    This homepage will become customized as you follow active members on CineLog.
+                </p>
+            {% else %}
+                <h1 class="h3 text-white fw-bold mb-2">
+                    Welcome to CineLog, {{ request.user.username }}! Start by logging your first film.
+                </h1>
+                <p class="text-secondary small mb-0" style="color: #9ab !important;">
+                    Rate and review films to build your personal diary and customize your community feed.
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- Section: LATEST ADDED FILMS (Auto-Sliding Carousel every 3s) -->
+        {% if latest_movies %}
+            <div class="mb-5 pb-3">
+                <div class="section-title">
+                    <span>LATEST ADDED FILMS</span>
+                    <span class="small fw-normal text-secondary">Recently added to the collection</span>
+                </div>
+
+                <div id="latestMoviesCarousel" class="carousel slide position-relative" data-bs-ride="carousel" data-bs-interval="3000" data-bs-pause="hover">
+                    <!-- Clean Carousel Indicators (Dots at the bottom) -->
+                    <div class="carousel-indicators mb-0" style="bottom: -28px;">
+                        {% for movie in latest_movies %}
+                            <button type="button" data-bs-target="#latestMoviesCarousel" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %}" aria-current="{% if forloop.first %}true{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Carousel Slides (Each slide is an entire clickable card) -->
+                    <div class="carousel-inner rounded-3 overflow-hidden">
+                        {% for movie in latest_movies %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <a href="{% url 'movie_detail' movie.pk %}" class="latest-movie-card text-decoration-none d-block p-4">
+                                    <div class="row align-items-center g-4">
+                                        <!-- High-Quality Movie Poster -->
+                                        <div class="col-12 col-sm-4 col-md-3 col-lg-2 text-center text-sm-start">
+                                            <div class="poster-wrap rounded-2 shadow" style="height: 220px; max-width: 155px; margin: 0 auto; background-color: #0d1117; overflow: hidden;">
+                                                {% if movie.poster_url %}
+                                                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="movie-poster" style="width: 100%; height: 100%; object-fit: cover;" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                                                {% else %}
+                                                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                                                        <i class="bi bi-film fs-2"></i>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <!-- Movie Title, Release Year, Genre Badge -->
+                                        <div class="col-12 col-sm-8 col-md-9 col-lg-10">
+                                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                                {% if movie.genre %}
+                                                    <span class="badge rounded-pill bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-2 py-1">
+                                                        {{ movie.genre }}
+                                                    </span>
+                                                {% endif %}
+                                                <span class="text-secondary small">
+                                                    <i class="bi bi-calendar3 me-1"></i>{{ movie.release_year }}
+                                                </span>
+                                                {% if movie.director %}
+                                                    <span class="text-secondary small">
+                                                        <i class="bi bi-person me-1"></i>{{ movie.director }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+
+                                            <h3 class="h4 text-white fw-bold mb-2 movie-card-title">
+                                                {{ movie.title }}
+                                            </h3>
+
+                                            {% if movie.synopsis %}
+                                                <p class="text-secondary small mb-3" style="color: #9ab !important; max-width: 750px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5;">
+                                                    {{ movie.synopsis }}
+                                                </p>
+                                            {% endif %}
+
+                                            <div class="d-inline-flex align-items-center gap-1 text-success small fw-semibold">
+                                                <span>View Film Page</span>
+                                                <i class="bi bi-arrow-right"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Sleek Prev/Next Hover Arrows -->
+                    <button class="carousel-control-prev" type="button" data-bs-target="#latestMoviesCarousel" data-bs-slide="prev" aria-label="Previous slide">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#latestMoviesCarousel" data-bs-slide="next" aria-label="Next slide">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- ========================================================= -->
+        <!-- Section: 🤖 AI RECOMMENDED FOR YOU (Content-Based ML)      -->
+        <!-- ========================================================= -->
+        {% if ai_recommendations %}
+            <div class="mb-5 pb-2">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 border-bottom border-secondary border-opacity-25 pb-2 gap-2">
+                    <div>
+                        <div class="section-title mb-1">
+                            <span class="d-flex align-items-center gap-2">
+                                <span>🤖 AI RECOMMENDED FOR YOU</span>
+                                <span class="badge rounded-pill bg-success bg-opacity-25 text-success border border-success border-opacity-50 fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">ML Powered</span>
+                            </span>
+                        </div>
+                        <p class="text-secondary small mb-0" style="color: #9ab !important;">
+                            Tailored from your 4★ &amp; 5★ watch history
+                        </p>
+                    </div>
+                    <a href="{% url 'recommendations' %}" class="text-decoration-none text-success small fw-semibold d-inline-flex align-items-center gap-1 hover-accent">
+                        <span>View All AI Picks &amp; Explanations</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div class="row row-cols-2 row-cols-sm-3 row-cols-md-6 g-3">
+                    {% for rec in ai_recommendations %}
+                        <div class="col">
+                            <div class="poster-card h-100 d-flex flex-column justify-content-between position-relative">
+                                <a href="{% url 'movie_detail' rec.movie.pk %}" class="text-decoration-none">
+                                    <div class="poster-wrap position-relative">
+                                        {% if rec.movie.poster_url %}
+                                            <img src="{{ rec.movie.poster_url }}" alt="{{ rec.movie.title }}" class="movie-poster" loading="lazy" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                                        {% else %}
+                                            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                                                <i class="bi bi-film fs-2 mb-1"></i>
+                                                <span class="small px-1 text-center" style="font-size: 0.7rem;">{{ rec.movie.title }}</span>
+                                            </div>
+                                        {% endif %}
+
+                                        <!-- Top Left: Green AI Match Badge -->
+                                        <div class="position-absolute top-0 start-0 m-2" style="z-index: 2;">
+                                            <span class="badge bg-dark bg-opacity-90 border border-success text-success fw-bold shadow-sm" style="color: #00e054 !important; border-color: #00e054 !important; font-size: 0.7rem; backdrop-filter: blur(4px);">
+                                                <i class="bi bi-cpu me-1"></i>{{ rec.match_score_str }}
+                                            </span>
+                                        </div>
+
+                                        <!-- Top Right: Quick Watchlist Toggle Button -->
+                                        <div class="position-absolute top-0 end-0 m-2" style="z-index: 3;">
+                                            <form method="post" action="{% url 'toggle_watchlist' rec.movie.pk %}" class="m-0 p-0" onclick="event.stopPropagation();">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                                <button type="submit" class="btn btn-sm p-1 rounded-circle border-0 shadow {% if rec.in_watchlist %}btn-warning text-dark{% else %}btn-dark bg-opacity-75 text-white hover-accent{% endif %}" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;" title="{% if rec.in_watchlist %}In your Watchlist (Click to remove){% else %}Add to Watchlist{% endif %}">
+                                                    <i class="bi {% if rec.in_watchlist %}bi-bookmark-check-fill{% else %}bi-bookmark-plus{% endif %}" style="font-size: 0.85rem;"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-2">
+                                        <div class="text-white small fw-bold text-truncate" title="{{ rec.movie.title }}">{{ rec.movie.title }}</div>
+                                        <div class="d-flex justify-content-between align-items-center text-secondary mb-1" style="font-size: 0.72rem;">
+                                            <span>{{ rec.movie.release_year }}</span>
+                                            {% if rec.movie.genre %}
+                                                <span class="text-truncate ps-1" style="max-width: 85px; font-size: 0.68rem;">{{ rec.movie.genre }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-secondary text-truncate" style="font-size: 0.68rem; color: #789 !important;" title="{{ rec.reason }}">
+                                            <i class="bi bi-lightbulb me-1 text-warning"></i>{{ rec.reason }}
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endif %}
+
+<!-- ========================================================= -->
+<!-- CATALOG SEARCH & BROWSE                                   -->
+<!-- ========================================================= -->
+<div id="explore-films" class="pt-2" style="scroll-margin-top: 90px;">
+    <div class="row align-items-center mb-4 g-3">
+        <div class="col-12 col-md-6">
+            <h2 class="h4 text-white fw-bold mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-film text-success" style="color: #00e054 !important;"></i>
+                <span>Explore Films</span>
+            </h2>
+            <p class="text-secondary small mb-0" style="color: #9ab !important;">
+                Search our collection, find ratings, and add titles to your watchlist.
+            </p>
+        </div>
+        <div class="col-12 col-md-6">
+            <form method="get" action="{% url 'movie_list' %}" class="d-flex gap-2">
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input 
+                        type="text" 
+                        name="q" 
+                        value="{{ query }}" 
+                        class="form-control" 
+                        placeholder="Search by title, genre, or director..." 
+                        aria-label="Search movies"
+                    >
+                    {% if query %}
+                        <a href="{% url 'movie_list' %}" class="btn btn-outline-secondary" title="Clear search">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-cinelog-accent px-3">Search</button>
+            </form>
+        </div>
+    </div>
+
+    {% if query %}
+        <div class="mb-3 d-flex align-items-center justify-content-between text-secondary small">
+            <span>Found <strong>{{ movies|length }}</strong> results matching "<em>{{ query }}</em>"</span>
+            <a href="{% url 'movie_list' %}" class="text-decoration-none text-success" style="color: #00e054 !important;">
+                View All Movies
+            </a>
+        </div>
+    {% endif %}
+
+    <!-- Movies Grid -->
+    {% if movies %}
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3 mb-5">
+            {% for movie in movies %}
+                <div class="col">
+                    <a href="{% url 'movie_detail' movie.pk %}" class="poster-card h-100">
+                        <div class="poster-wrap">
+                            {% if movie.poster_url %}
+                                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="movie-poster" loading="lazy" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                            {% else %}
+                                <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                                    <i class="bi bi-film fs-1 mb-2"></i>
+                                    <span class="small px-2 text-center">{{ movie.title }}</span>
+                                </div>
+                            {% endif %}
+
+                            {% if movie.avg_rating %}
+                                <div class="position-absolute bottom-0 end-0 m-2">
+                                    <span class="badge bg-dark bg-opacity-75 border border-success text-success fw-bold small" style="color: #00e054 !important; border-color: #00e054 !important;">
+                                        ★ {{ movie.avg_rating|floatformat:1 }}
+                                    </span>
+                                </div>
+                            {% elif movie.average_rating %}
+                                <div class="position-absolute bottom-0 end-0 m-2">
+                                    <span class="badge bg-dark bg-opacity-75 border border-success text-success fw-bold small" style="color: #00e054 !important; border-color: #00e054 !important;">
+                                        ★ {{ movie.average_rating|floatformat:1 }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="p-2">
+                            <h6 class="card-title text-white small fw-bold mb-1 text-truncate" title="{{ movie.title }}">
+                                {{ movie.title }}
+                            </h6>
+                            <div class="d-flex justify-content-between align-items-center text-secondary" style="font-size: 0.72rem;">
+                                <span>{{ movie.release_year }}</span>
+                                {% if movie.genre %}
+                                    <span class="badge bg-secondary-subtle text-light-emphasis" style="font-size: 0.65rem;">
+                                        {{ movie.genre }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5 cinelog-card p-4 my-3">
+            <i class="bi bi-camera-reels text-secondary display-3 mb-3"></i>
+            <h3 class="h4 text-white">No Movies Found</h3>
+            {% if query %}
+                <p class="text-secondary small">No titles or genres matched your query "<em>{{ query }}</em>".</p>
+                <a href="{% url 'movie_list' %}" class="btn btn-sm btn-cinelog-accent mt-2">
+                    <i class="bi bi-arrow-left me-1"></i>Show All Movies
+                </a>
+            {% else %}
+                <p class="text-secondary small">No movies have been added yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}AI Recommendations - CineLog{% endblock %}
+
+{% block extra_head %}
+<style>
+    .ai-hero-banner {
+        background: linear-gradient(135deg, rgba(16, 26, 20, 0.95) 0%, rgba(20, 24, 28, 0.98) 50%, rgba(13, 20, 16, 0.95) 100%);
+        border: 1px solid rgba(0, 224, 84, 0.2);
+        border-radius: 1rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(0, 224, 84, 0.05);
+    }
+    .ai-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(0, 224, 84, 0.1);
+        border: 1px solid rgba(0, 224, 84, 0.3);
+        color: #00e054;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        text-transform: uppercase;
+    }
+    .rec-card {
+        background-color: #1a2026;
+        border: 1px solid #2a3440;
+        border-radius: 0.75rem;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
+    }
+    .rec-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(0, 224, 84, 0.4);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 224, 84, 0.1);
+    }
+    .rec-poster-wrap {
+        position: relative;
+        aspect-ratio: 2 / 3 !important;
+        background-color: #0f1215;
+        overflow: hidden;
+        border-radius: 6px;
+    }
+    .rec-ai-badge {
+        background: rgba(15, 23, 18, 0.92);
+        border: 1px solid #00e054;
+        color: #00e054;
+        font-weight: 800;
+        font-size: 0.72rem;
+        letter-spacing: 0.4px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        backdrop-filter: blur(6px);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+    .ai-reason-box {
+        background-color: rgba(25, 34, 44, 0.6);
+        border-left: 3px solid #00e054;
+        border-radius: 0 6px 6px 0;
+        padding: 8px 12px;
+        font-size: 0.78rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Hero Banner -->
+    <div class="ai-hero-banner p-4 p-md-5 mb-5 text-start">
+        <div class="row align-items-center g-4">
+            <div class="col-12 col-lg-8">
+                <div class="ai-chip mb-3">
+                    <i class="bi bi-robot fs-6"></i>
+                    <span>Content-Based Filtering &bull; Scikit-Learn</span>
+                </div>
+                <h1 class="display-6 text-white fw-bold mb-3" style="letter-spacing: -0.5px;">
+                    AI Movie Recommendations
+                </h1>
+                
+                {% if request.user.is_authenticated %}
+                    {% if has_high_ratings %}
+                        <p class="lead fs-6 text-secondary mb-3" style="color: #cad3dc !important; max-width: 700px;">
+                            Personalized exclusively for <strong class="text-white">{{ request.user.username }}</strong>. 
+                            Our machine learning engine analyzed your 4★ &amp; 5★ ratings, evaluating directorial nuances, narrative themes, and genre profiles to surface these cinematic matches.
+                        </p>
+                        {% if favorite_seeds %}
+                            <div class="d-flex flex-wrap align-items-center gap-2 pt-1">
+                                <span class="small text-secondary" style="font-size: 0.75rem;">SEEDED FROM:</span>
+                                {% for s in favorite_seeds %}
+                                    <span class="badge bg-dark border border-secondary text-light small px-2 py-1">
+                                        <i class="bi bi-star-fill text-warning me-1" style="font-size: 0.65rem;"></i>{{ s.title }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% elif has_watchlist %}
+                        <p class="lead fs-6 text-secondary mb-3" style="color: #cad3dc !important; max-width: 700px;">
+                            Generated from the films currently saved in your <strong class="text-white">Watchlist</strong>. Rate your watched films to refine your personalized AI recommendations!
+                        </p>
+                    {% else %}
+                        <p class="lead fs-6 text-secondary mb-3" style="color: #cad3dc !important; max-width: 700px;">
+                            Welcome <strong class="text-white">{{ request.user.username }}</strong>! Start rating films with 4★ or 5★ to unlock fully customized, personalized AI recommendations tailored to your taste.
+                        </p>
+                    {% endif %}
+                {% else %}
+                    <p class="lead fs-6 text-secondary mb-3" style="color: #cad3dc !important; max-width: 700px;">
+                        Explore our top-rated cinematic masterpieces. 
+                        <a href="{% url 'login' %}?next={% url 'recommendations' %}" class="text-success fw-bold text-decoration-none">Sign in</a> 
+                        or <a href="{% url 'register' %}" class="text-success fw-bold text-decoration-none">Create an Account</a> 
+                        to train the AI with your personal film ratings!
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="col-12 col-lg-4 text-lg-end">
+                <div class="d-inline-flex flex-column gap-2 text-start p-3 rounded-3" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="d-flex align-items-center gap-2 small text-secondary">
+                        <i class="bi bi-check2-circle text-success"></i>
+                        <span>TF-IDF Vector Space Analysis</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 small text-secondary">
+                        <i class="bi bi-check2-circle text-success"></i>
+                        <span>Cosine Distance Computation</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 small text-secondary">
+                        <i class="bi bi-check2-circle text-success"></i>
+                        <span>Excludes Watched/Logged Titles</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 small text-secondary">
+                        <i class="bi bi-check2-circle text-success"></i>
+                        <span>Dynamic AI Match Scoring</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations Grid -->
+    {% if recommendations %}
+        <div class="d-flex align-items-center justify-content-between mb-4 border-bottom border-secondary border-opacity-25 pb-2">
+            <div>
+                <h2 class="h5 text-white fw-bold mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-stars text-success"></i>
+                    <span>Top AI Picks for You</span>
+                </h2>
+                <span class="text-secondary small">Ranked by algorithmic affinity &amp; thematic overlap</span>
+            </div>
+            <span class="badge bg-dark border border-secondary text-secondary">
+                {{ recommendations|length }} Titles Suggested
+            </span>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+            {% for rec in recommendations %}
+                <div class="col">
+                    <div class="rec-card h-100 p-3 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="row g-3 mb-3">
+                                <!-- Movie Poster Thumbnail (Fixed 2:3) -->
+                                <div class="col-4">
+                                    <div class="rec-poster-wrap shadow">
+                                        <a href="{% url 'movie_detail' rec.movie.pk %}">
+                                            {% if rec.movie.poster_url %}
+                                                <img src="{{ rec.movie.poster_url }}" alt="{{ rec.movie.title }}" class="movie-poster" loading="lazy" referrerpolicy="no-referrer" onerror="handlePosterError(this)">
+                                            {% else %}
+                                                <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                                                    <i class="bi bi-film fs-2"></i>
+                                                </div>
+                                            {% endif %}
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Movie Meta & Match Badge -->
+                                <div class="col-8">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <span class="rec-ai-badge">
+                                            <i class="bi bi-cpu me-1"></i>{{ rec.match_score_str }}
+                                        </span>
+                                        {% if rec.movie.avg_rating %}
+                                            <span class="text-success small fw-bold">
+                                                ★ {{ rec.movie.avg_rating|floatformat:1 }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <h3 class="h6 text-white fw-bold mb-1">
+                                        <a href="{% url 'movie_detail' rec.movie.pk %}" class="text-white text-decoration-none hover-accent">
+                                            {{ rec.movie.title }}
+                                        </a>
+                                    </h3>
+
+                                    <div class="text-secondary small mb-2" style="font-size: 0.75rem;">
+                                        <span>{{ rec.movie.release_year }}</span>
+                                        {% if rec.movie.director %}
+                                            <span>&bull; {{ rec.movie.director }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                    {% if rec.movie.genre %}
+                                        <span class="badge rounded-pill bg-secondary bg-opacity-25 text-light border border-secondary border-opacity-50" style="font-size: 0.68rem;">
+                                            {{ rec.movie.genre }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- AI Reasoning Box -->
+                            <div class="ai-reason-box mb-3">
+                                <div class="text-success fw-bold mb-1" style="font-size: 0.72rem; letter-spacing: 0.4px;">
+                                    <i class="bi bi-lightbulb-fill text-warning me-1"></i>WHY THIS WAS RECOMMENDED
+                                </div>
+                                <div class="text-light mb-1 fw-semibold" style="font-size: 0.76rem;">
+                                    {{ rec.reason }}
+                                </div>
+                                <div class="text-secondary small" style="font-size: 0.72rem; color: #9ab !important;">
+                                    {{ rec.explanation_detail }}
+                                </div>
+                            </div>
+
+                            <!-- Synopsis Excerpt -->
+                            {% if rec.movie.synopsis %}
+                                <p class="text-secondary small mb-3" style="color: #89a !important; font-size: 0.75rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;">
+                                    {{ rec.movie.synopsis }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Card Action Buttons -->
+                        <div class="pt-2 border-top border-secondary border-opacity-25 d-flex gap-2 align-items-center">
+                            <a href="{% url 'movie_detail' rec.movie.pk %}" class="btn btn-sm btn-outline-light flex-grow-1" style="font-size: 0.78rem;">
+                                <span>View Film</span>
+                                <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+
+                            {% if request.user.is_authenticated %}
+                                <form method="post" action="{% url 'toggle_watchlist' rec.movie.pk %}" class="m-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="btn btn-sm {% if rec.in_watchlist %}btn-warning text-dark{% else %}btn-outline-secondary text-light{% endif %}" style="font-size: 0.78rem;" title="{% if rec.in_watchlist %}In Watchlist (Click to remove){% else %}Add to Watchlist{% endif %}">
+                                        <i class="bi {% if rec.in_watchlist %}bi-bookmark-check-fill{% else %}bi-bookmark-plus{% endif %} me-1"></i>
+                                        <span>{% if rec.in_watchlist %}Saved{% else %}Watchlist{% endif %}</span>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="cinelog-card p-5 text-center my-4">
+            <i class="bi bi-camera-reels text-secondary display-3 mb-3"></i>
+            <h3 class="h4 text-white">No Recommendations Available</h3>
+            <p class="text-secondary small mx-auto" style="max-width: 500px;">
+                You've either reviewed every title in our catalog or we need more data. 
+                Browse our film catalog and add ratings to power your personalized recommendations!
+            </p>
+            <a href="{% url 'movie_list' %}" class="btn btn-sm btn-cinelog-accent mt-2">
+                <i class="bi bi-arrow-left me-1"></i>Explore Catalog
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
